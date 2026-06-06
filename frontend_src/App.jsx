@@ -5,6 +5,8 @@ import {
   BarChart, Bar, Legend
 } from 'recharts';
 import { WidthProvider, Responsive } from "react-grid-layout/legacy";
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
 const PREDEFINED_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#000000', '#ffffff'];
