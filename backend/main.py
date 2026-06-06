@@ -29,8 +29,8 @@ app.add_middleware(
 )
 
 ARCHIVE_PATH = os.getenv("ARCHIVE_PATH", "/mnt/archive")
-AUTO_SORTED_PATH = os.path.join(ARCHIVE_PATH, "Web_portal", "Auto_sorted")
-APPROVED_PATH = os.path.join(ARCHIVE_PATH, "Web_portal", "Approved")
+AUTO_SORTED_PATH = os.path.join(ARCHIVE_PATH, "auto_sorted")
+APPROVED_PATH = os.path.join(ARCHIVE_PATH, "approved")
 
 # Ensure base dirs exist
 try:
@@ -673,12 +673,12 @@ def index_media():
                 except PermissionError:
                     pass
             
-            # Only scan Auto_sorted and Approved to avoid system files
-            scan_paths = [
-                os.path.join(ARCHIVE_PATH, "Web_portal", "Auto_sorted"),
-                os.path.join(ARCHIVE_PATH, "Web_portal", "Approved")
+            # Only scan auto_sorted and approved to avoid system files
+            scan_dirs = [
+                os.path.join(ARCHIVE_PATH, "auto_sorted"),
+                os.path.join(ARCHIVE_PATH, "approved")
             ]
-            for scan_path in scan_paths:
+            for scan_path in scan_dirs:
                 if os.path.exists(scan_path):
                     for entry in scan_dir_recursive(scan_path):
                         ext = entry.name.lower().split('.')[-1]

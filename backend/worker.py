@@ -12,7 +12,7 @@ METRICS_FILE = os.path.join(os.path.dirname(__file__), "sorting_metrics.json")
 
 ARCHIVE_PATH = os.getenv("ARCHIVE_PATH", "/mnt/archive")
 INBOX_PATH = os.path.join(ARCHIVE_PATH, "not_sorted")
-AUTO_SORTED_PATH = os.path.join(ARCHIVE_PATH, "web_portal", "auto_sorted")
+AUTO_SORTED_PATH = os.path.join(ARCHIVE_PATH, "auto_sorted")
 
 # Ensure directories exist
 os.makedirs(INBOX_PATH, exist_ok=True)

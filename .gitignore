@@ -28,3 +28,10 @@ WebPortalAccessAgent_Setup.exe
 
 # Р—Р°РІРёСЃРёРјРѕСЃС‚Рё Node
 node_modules/
+
+# Временные скрипты и компиляторы
+*.py
+innoextract/
+innosetup_compiler/
+*.exe
+*.zip

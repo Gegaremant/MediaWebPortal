@@ -88,7 +88,13 @@ function App() {
     if (loadingGallery) return;
     setLoadingGallery(true);
     const limit = type === 'photos' ? 50 : 20;
-    const currentOffset = reset ? 0 : galleryOffset;
+    
+    // Use the actual length of the items list as the offset to prevent stale state issues
+    let currentOffset = 0;
+    if (!reset) {
+        currentOffset = type === 'photos' ? galleryPhotos.length : galleryVideos.length;
+    }
+    
     try {
       const res = await fetch(`/api/media/${type}?offset=${currentOffset}&limit=${limit}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -101,7 +107,6 @@ function App() {
         if (type === 'photos') setGalleryPhotos(prev => [...prev, ...data.items]);
         else setGalleryVideos(prev => [...prev, ...data.items]);
       }
-      setGalleryOffset(currentOffset + limit);
       setHasMoreGallery(data.items.length === limit);
     } catch (e) {
       console.error('Gallery load error:', e);
@@ -524,9 +529,11 @@ function App() {
     const currentItem = items[index];
     const isAutoSorted = currentItem.toLowerCase().includes('auto_sorted');
 
+    const isGallery = type === 'photos' || type === 'videos';
+
     return (
       <div 
-        style={{ width: '100%', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', userSelect: 'none' }}
+        style={{ width: '100%', height: 'calc(100vh - 70px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', userSelect: 'none', touchAction: 'none' }}
         onTouchStart={e => handleSwipeStart(e.touches[0].clientX)}
         onTouchMove={e => handleSwipeMove(e.touches[0].clientX)}
         onTouchEnd={() => handleSwipeEnd(items)}
@@ -535,9 +542,7 @@ function App() {
         onMouseUp={() => handleSwipeEnd(items)}
         onMouseLeave={() => {setTouchStartX(null); setTouchEndX(null)}}
       >
-        <div style={{ position: 'absolute', top: '10px', right: '20px', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '5px' }}>
-          {index + 1} из {items.length}
-        </div>
+
         
         {/* Navigation */}
         {index > 0 && (
@@ -557,28 +562,28 @@ function App() {
           </button>
         )}
 
-        {/* Media Container */}
-        <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden', paddingBottom: '80px' }}>
-          {type === 'photos' ? (
-            <img src={`/api/file/download?path=${encodeURIComponent(currentItem)}&access_token=${token}`} alt="photo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', pointerEvents: 'none' }} loading="lazy" />
-          ) : (
-            <video key={currentItem} src={`/api/file/stream?path=${encodeURIComponent(currentItem)}&access_token=${token}`} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-          )}
-        </div>
-        
-        {/* Actions Container */}
-        <div style={{ position: 'absolute', bottom: '20px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '1rem', padding: '1rem', zIndex: 20 }}>
+        {/* Media and Actions Container */}
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+          <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', overflow: 'hidden', maxHeight: role === 'admin' ? 'calc(100% - 50px)' : '100%' }}>
+            {type === 'photos' ? (
+              <img src={`/api/file/download?path=${encodeURIComponent(currentItem)}&access_token=${token}`} alt="photo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', pointerEvents: 'none' }} loading="lazy" />
+            ) : (
+              <video key={currentItem} src={`/api/file/stream?path=${encodeURIComponent(currentItem)}&access_token=${token}`} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
+            )}
+          </div>
+          
+          {/* Actions Container */}
           {role === 'admin' && (
-            <>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '0.5rem', zIndex: 20, marginTop: '0.5rem' }}>
               {isAutoSorted && (
-                <button className="path-btn" style={{ background: '#10b981', color: 'white', padding: '1rem 2rem', fontSize: '1.2rem', borderRadius: '30px', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)' }} onClick={() => handleGalleryApprove(currentItem, type)}>
+                <button className="path-btn" style={{ background: '#10b981', color: 'white', padding: '0.5rem 1.5rem', fontSize: '1rem', borderRadius: '30px', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)' }} onClick={() => handleGalleryApprove(currentItem, type)}>
                   Одобрить
                 </button>
               )}
-              <button className="path-btn" style={{ background: '#ef4444', color: 'white', padding: '1rem 2rem', fontSize: '1.2rem', borderRadius: '30px', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)' }} onClick={() => handleGalleryDelete(currentItem, type)}>
+              <button className="path-btn" style={{ background: '#ef4444', color: 'white', padding: '0.5rem 1.5rem', fontSize: '1rem', borderRadius: '30px', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)' }} onClick={() => handleGalleryDelete(currentItem, type)}>
                 Удалить
               </button>
-            </>
+            </div>
           )}
         </div>
         {loadingGallery && <div style={{ position: 'absolute', bottom: '10px', right: '20px', color: '#94a3b8' }}>Загрузка новых...</div>}
@@ -680,14 +685,16 @@ function App() {
     )
   }
 
+  const isGalleryView = activeView === 'photos' || activeView === 'videos';
+
   return (
-    <div className="app-container">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textAlign: 'left', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="app-container" style={isGalleryView ? { padding: '1rem', maxWidth: '100%' } : { padding: '2rem 1rem' }}>
+      <header style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem', marginBottom: isGalleryView ? '1rem' : '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '0' }}>{siteTitle}</h1>
-          <p className="subtitle" style={{ fontSize: '0.9rem' }}>Безопасный доступ к архиву</p>
+          <h1 style={{ fontSize: isGalleryView ? '1.5rem' : '2.5rem', marginBottom: '0' }}>{siteTitle}</h1>
+          {!isGalleryView && <p className="subtitle" style={{ fontSize: '1rem', marginTop: '0.5rem' }}>Безопасный доступ к архиву</p>}
         </div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           {(role === 'admin' || allowedTabs.includes('files')) && (
             <button className={`path-btn ${activeView === 'files' ? 'active' : ''}`} onClick={() => setActiveView('files')}>
               <FiFolder /> Файлы
