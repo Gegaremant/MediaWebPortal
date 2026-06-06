@@ -179,9 +179,11 @@ function App() {
   // Sorter State
   const [sorterState, setSorterState] = useState({status: 'running', delay_ms: 0})
   
-  const handleSorterControl = async (action, delay_ms = null) => {
+  const handleSorterControl = async (action, delay_ms = null, batch_size = null, adaptive_mode = null) => {
     const payload = { action }
     if (delay_ms !== null) payload.delay_ms = delay_ms
+    if (batch_size !== null) payload.batch_size = batch_size
+    if (adaptive_mode !== null) payload.adaptive_mode = adaptive_mode
     const res = await fetch('/api/admin/sorter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getHeaders() },
@@ -878,8 +880,22 @@ function App() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.8rem', color: '#cbd5e1' }} onMouseDown={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Размер пакета (батч): {sorterState?.batch_size || 30}</span>
+                  <input type="range" min="1" max="100" value={sorterState?.batch_size || 30} onChange={e => handleSorterControl(sorterState?.status || 'running', sorterState?.delay_ms, parseInt(e.target.value), sorterState?.adaptive_mode)} style={{ width: '100px' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Базовая задержка: {sorterState?.delay_ms || 1000} мс</span>
+                  <input type="range" min="0" max="5000" step="100" value={sorterState?.delay_ms || 1000} onChange={e => handleSorterControl(sorterState?.status || 'running', parseInt(e.target.value), sorterState?.batch_size, sorterState?.adaptive_mode)} style={{ width: '100px' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span title="Авто-увеличение задержки при высокой нагрузке на TrueNAS">Умный режим (Adaptive Speed):</span>
+                  <input type="checkbox" checked={sorterState?.adaptive_mode ?? true} onChange={e => handleSorterControl(sorterState?.status || 'running', sorterState?.delay_ms, sorterState?.batch_size, e.target.checked)} />
+                </div>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-                <span>Скорость: {latestMetrics?.sorting?.speed || 0} ф/с • Задержка: {sorterState?.delay_ms || 0}</span>
+                <span>Скорость: {latestMetrics?.sorting?.speed || 0} ф/с</span>
                 <span>Всего: {latestMetrics?.sorting?.total_moved || 0} • {sorterState?.status || 'неизвестно'}</span>
               </div>
             </div>

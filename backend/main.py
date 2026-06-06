@@ -291,6 +291,13 @@ def poll_truenas_metrics():
                     }
             except Exception as e:
                 metrics_cache["truenas"] = {"cpu": 0, "ram": 0, "net_tx": 0, "net_rx": 0, "disk_read": 0, "disk_write": 0, "disks": []}
+            
+            try:
+                metrics_file = os.path.join(os.path.dirname(__file__), "truenas_metrics.json")
+                with open(metrics_file, "w") as f:
+                    json.dump(metrics_cache.get("truenas", {}), f)
+            except:
+                pass
         time.sleep(5)
 
 threading.Thread(target=poll_truenas_metrics, daemon=True).start()
@@ -527,16 +534,19 @@ def download_public_file(token: str, file_name: str, db: Session = Depends(datab
 class SorterCommand(BaseModel):
     action: str
     delay_ms: int = None
+    batch_size: int = None
+    adaptive_mode: bool = None
 
 @app.post("/api/admin/sorter")
 def control_sorter(req: SorterCommand, current_user: models.User = Depends(auth.get_current_admin_user)):
     control_file = os.path.join(os.path.dirname(__file__), "sorter_control.json")
-    state = {"status": "running", "delay_ms": 0}
+    state = {"status": "running", "delay_ms": 1000, "batch_size": 30, "adaptive_mode": True}
     if req.action == 'get':
         if os.path.exists(control_file):
             try:
                 with open(control_file, "r") as f:
-                    return json.load(f)
+                    file_state = json.load(f)
+                    state.update(file_state)
             except:
                 pass
         return state
@@ -544,13 +554,18 @@ def control_sorter(req: SorterCommand, current_user: models.User = Depends(auth.
     if os.path.exists(control_file):
         try:
             with open(control_file, "r") as f:
-                state = json.load(f)
+                file_state = json.load(f)
+                state.update(file_state)
         except:
             pass
     if req.action in ["pause", "running", "stopped"]:
         state["status"] = req.action
     if req.delay_ms is not None:
         state["delay_ms"] = req.delay_ms
+    if req.batch_size is not None:
+        state["batch_size"] = req.batch_size
+    if req.adaptive_mode is not None:
+        state["adaptive_mode"] = req.adaptive_mode
     with open(control_file, "w") as f:
         json.dump(state, f)
     return state
