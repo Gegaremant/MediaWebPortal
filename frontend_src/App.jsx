@@ -52,6 +52,36 @@ function App() {
   
   const [fullscreenImage, setFullscreenImage] = useState(null)
 
+  const [touchStartX, setTouchStartX] = useState(null)
+  const [touchEndX, setTouchEndX] = useState(null)
+
+  const handleSwipeStart = (clientX) => {
+    setTouchEndX(null)
+    setTouchStartX(clientX)
+  }
+
+  const handleSwipeMove = (clientX) => {
+    if (touchStartX !== null) {
+      setTouchEndX(clientX)
+    }
+  }
+
+  const handleSwipeEnd = (items) => {
+    if (touchStartX === null || touchEndX === null) {
+      setTouchStartX(null)
+      return
+    }
+    const distance = touchStartX - touchEndX
+    if (distance > 50 && currentMediaIndex < items.length - 1) {
+      setCurrentMediaIndex(prev => prev + 1)
+    }
+    if (distance < -50 && currentMediaIndex > 0) {
+      setCurrentMediaIndex(prev => prev - 1)
+    }
+    setTouchStartX(null)
+    setTouchEndX(null)
+  }
+
   const loadGallery = async (type, reset = false) => {
     if (loadingGallery) return;
     setLoadingGallery(true);
@@ -491,7 +521,16 @@ function App() {
     const isAutoSorted = currentItem.toLowerCase().includes('auto_sorted');
 
     return (
-      <div style={{ width: '100%', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <div 
+        style={{ width: '100%', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', userSelect: 'none' }}
+        onTouchStart={e => handleSwipeStart(e.touches[0].clientX)}
+        onTouchMove={e => handleSwipeMove(e.touches[0].clientX)}
+        onTouchEnd={() => handleSwipeEnd(items)}
+        onMouseDown={e => handleSwipeStart(e.clientX)}
+        onMouseMove={e => handleSwipeMove(e.clientX)}
+        onMouseUp={() => handleSwipeEnd(items)}
+        onMouseLeave={() => {setTouchStartX(null); setTouchEndX(null)}}
+      >
         <div style={{ position: 'absolute', top: '10px', right: '20px', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '5px' }}>
           {index + 1} из {items.length}
         </div>
@@ -515,24 +554,24 @@ function App() {
         )}
 
         {/* Media Container */}
-        <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', overflow: 'hidden' }}>
+        <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden', paddingBottom: '80px' }}>
           {type === 'photos' ? (
-            <img src={`/api/file/download?path=${encodeURIComponent(currentItem)}&access_token=${token}`} alt="photo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} loading="lazy" />
+            <img src={`/api/file/download?path=${encodeURIComponent(currentItem)}&access_token=${token}`} alt="photo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', pointerEvents: 'none' }} loading="lazy" />
           ) : (
-            <video key={currentItem} src={`/api/file/stream?path=${encodeURIComponent(currentItem)}&access_token=${token}`} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            <video key={currentItem} src={`/api/file/stream?path=${encodeURIComponent(currentItem)}&access_token=${token}`} controls autoPlay style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
           )}
         </div>
         
         {/* Actions Container */}
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingBottom: '1rem' }}>
+        <div style={{ position: 'absolute', bottom: '20px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '1rem', padding: '1rem', zIndex: 20 }}>
           {role === 'admin' && (
             <>
               {isAutoSorted && (
-                <button className="path-btn" style={{ background: '#10b981', color: 'white', padding: '0.75rem 2rem', fontSize: '1.1rem' }} onClick={() => handleGalleryApprove(currentItem, type)}>
+                <button className="path-btn" style={{ background: '#10b981', color: 'white', padding: '1rem 2rem', fontSize: '1.2rem', borderRadius: '30px', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)' }} onClick={() => handleGalleryApprove(currentItem, type)}>
                   Одобрить
                 </button>
               )}
-              <button className="path-btn" style={{ background: '#ef4444', color: 'white', padding: '0.75rem 2rem', fontSize: '1.1rem' }} onClick={() => handleGalleryDelete(currentItem, type)}>
+              <button className="path-btn" style={{ background: '#ef4444', color: 'white', padding: '1rem 2rem', fontSize: '1.2rem', borderRadius: '30px', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)' }} onClick={() => handleGalleryDelete(currentItem, type)}>
                 Удалить
               </button>
             </>
