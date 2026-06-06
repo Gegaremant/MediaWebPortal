@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  webportal:
+    build: .
+    container_name: webportal
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/opt/webportal/data
+      - ./media:/opt/webportal/media
+      - .env:/opt/webportal/.env
