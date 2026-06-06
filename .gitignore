@@ -1,0 +1,30 @@
+# Скомпилированные файлы
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Логи и среды
+*.log
+.env
+venv/
+env/
+.venv/
+
+# IDE и системные файлы
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Файлы агента и сборки
+WebPortalAccessAgent.spec
+WebPortalAccessAgent_Setup.exe
+*.apk
+
+# Зависимости Node
+node_modules/
